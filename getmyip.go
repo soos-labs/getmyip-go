@@ -18,7 +18,7 @@ import (
 const DefaultBaseURL = "https://api.getmyip.pro"
 
 // Version is the client version, sent in the User-Agent header.
-const Version = "0.1.1"
+const Version = "0.1.2"
 
 // Result is a single geolocation lookup response.
 type Result struct {

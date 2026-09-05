@@ -12,6 +12,7 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
+	"io"
 	"os"
 	"strings"
 	"time"
@@ -20,16 +21,29 @@ import (
 )
 
 func main() {
-	jsonOut := flag.Bool("json", false, "print raw JSON")
-	field := flag.String("field", "", "print a single field (ip, country, country_code, region, city, org, asn, timezone)")
-	key := flag.String("key", os.Getenv("GETMYIP_API_KEY"), "API key (or set GETMYIP_API_KEY) — optional")
-	flag.Usage = func() {
-		fmt.Fprint(os.Stderr, "getmyip — IP geolocation (https://getmyip.pro)\n\nUsage:\n  getmyip [flags] [ip]\n\nFlags:\n")
-		flag.PrintDefaults()
-	}
-	flag.Parse()
+	os.Exit(run(os.Args[1:], os.Stdout, os.Stderr))
+}
 
-	c := getmyip.New(getmyip.WithAPIKey(*key))
+func run(args []string, stdout, stderr io.Writer) int {
+	fs := flag.NewFlagSet("getmyip", flag.ContinueOnError)
+	fs.SetOutput(stderr)
+	jsonOut := fs.Bool("json", false, "print raw JSON")
+	field := fs.String("field", "", "print a single field (ip, country, country_code, region, city, org, asn, timezone)")
+	key := fs.String("key", os.Getenv("GETMYIP_API_KEY"), "API key (or set GETMYIP_API_KEY) — optional")
+	fs.Usage = func() {
+		fmt.Fprint(stderr, "getmyip — IP geolocation (https://getmyip.pro)\n\nUsage:\n  getmyip [flags] [ip]\n\nFlags:\n")
+		fs.PrintDefaults()
+	}
+	if err := fs.Parse(args); err != nil {
+		return 2
+	}
+
+	opts := []getmyip.Option{getmyip.WithAPIKey(*key)}
+	// свой инстанс (self-hosted) или мок в тестах
+	if base := os.Getenv("GETMYIP_BASE_URL"); base != "" {
+		opts = append(opts, getmyip.WithBaseURL(base))
+	}
+	c := getmyip.New(opts...)
 	ctx, cancel := context.WithTimeout(context.Background(), 12*time.Second)
 	defer cancel()
 
@@ -37,33 +51,34 @@ func main() {
 		res *getmyip.Result
 		err error
 	)
-	if flag.NArg() > 0 {
-		res, err = c.Lookup(ctx, flag.Arg(0))
+	if fs.NArg() > 0 {
+		res, err = c.Lookup(ctx, fs.Arg(0))
 	} else {
 		res, err = c.Me(ctx)
 	}
 	if err != nil {
-		fmt.Fprintln(os.Stderr, "error:", err)
-		os.Exit(1)
+		fmt.Fprintln(stderr, "error:", err)
+		return 1
 	}
 
 	switch {
 	case *field != "":
 		v, ok := fieldOf(res, *field)
 		if !ok {
-			fmt.Fprintln(os.Stderr, "unknown field:", *field)
-			os.Exit(2)
+			fmt.Fprintln(stderr, "unknown field:", *field)
+			return 2
 		}
-		fmt.Println(v)
+		fmt.Fprintln(stdout, v)
 	case *jsonOut:
 		b, _ := json.MarshalIndent(res, "", "  ")
-		fmt.Println(string(b))
+		fmt.Fprintln(stdout, string(b))
 	default:
-		printHuman(res)
+		printHuman(stdout, res)
 	}
+	return 0
 }
 
-func printHuman(r *getmyip.Result) {
+func printHuman(w io.Writer, r *getmyip.Result) {
 	loc := r.Country
 	if r.City != "" {
 		loc = r.City + ", " + loc
@@ -71,19 +86,19 @@ func printHuman(r *getmyip.Result) {
 	if r.CountryCode != "" {
 		loc += " (" + r.CountryCode + ")"
 	}
-	fmt.Printf("IP:       %s\n", r.IP)
+	fmt.Fprintf(w, "IP:       %s\n", r.IP)
 	if r.IsPrivate {
-		fmt.Println("Private/reserved address — no public geolocation.")
+		fmt.Fprintln(w, "Private/reserved address — no public geolocation.")
 		return
 	}
 	if loc != "" {
-		fmt.Printf("Location: %s\n", loc)
+		fmt.Fprintf(w, "Location: %s\n", loc)
 	}
 	if r.Org != "" {
-		fmt.Printf("Network:  %s (AS%d)\n", r.Org, r.ASN)
+		fmt.Fprintf(w, "Network:  %s (AS%d)\n", r.Org, r.ASN)
 	}
 	if r.Timezone != "" {
-		fmt.Printf("Timezone: %s\n", r.Timezone)
+		fmt.Fprintf(w, "Timezone: %s\n", r.Timezone)
 	}
 }
 
