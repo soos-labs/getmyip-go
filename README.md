@@ -70,3 +70,9 @@ Base URL `https://api.getmyip.pro` — see the [API docs](https://docs.getmyip.p
 ## License
 
 MIT © Soos Labs
+
+## Related
+
+- Python client/CLI: [soos-labs/getmyip-python](https://github.com/soos-labs/getmyip-python)
+- Node.js client/CLI: [soos-labs/getmyip-js](https://github.com/soos-labs/getmyip-js)
+- API docs: [docs.getmyip.pro](https://docs.getmyip.pro)
