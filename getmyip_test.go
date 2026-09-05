@@ -52,3 +52,23 @@ func TestClient(t *testing.T) {
 		t.Fatalf("Lookup(bad): expected error")
 	}
 }
+
+func TestHeaders(t *testing.T) {
+	var ua, key string
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		ua, key = r.Header.Get("User-Agent"), r.Header.Get("X-API-Key")
+		_ = json.NewEncoder(w).Encode(Result{IP: "1.2.3.4"})
+	}))
+	defer srv.Close()
+
+	c := New(WithBaseURL(srv.URL), WithAPIKey("k1"))
+	if _, err := c.Me(context.Background()); err != nil {
+		t.Fatal(err)
+	}
+	if ua != "getmyip-go/"+Version {
+		t.Errorf("User-Agent = %q, want getmyip-go/%s", ua, Version)
+	}
+	if key != "k1" {
+		t.Errorf("X-API-Key = %q, want k1", key)
+	}
+}

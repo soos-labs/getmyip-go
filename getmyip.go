@@ -17,6 +17,9 @@ import (
 // DefaultBaseURL is the public API endpoint.
 const DefaultBaseURL = "https://api.getmyip.pro"
 
+// Version is the client version, sent in the User-Agent header.
+const Version = "0.1.1"
+
 // Result is a single geolocation lookup response.
 type Result struct {
 	IP          string  `json:"ip"`
@@ -131,6 +134,9 @@ func (c *Client) get(ctx context.Context, path string, v any) error {
 
 func (c *Client) auth(req *http.Request) {
 	req.Header.Set("Accept", "application/json")
+	// default script user agents are rejected by the edge bot protection;
+	// identify ourselves explicitly
+	req.Header.Set("User-Agent", "getmyip-go/"+Version)
 	if c.apiKey != "" {
 		req.Header.Set("X-API-Key", c.apiKey)
 	}

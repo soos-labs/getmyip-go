@@ -2,6 +2,7 @@
 
 Tiny, dependency-free Go client **and CLI** for the [getmyip.pro](https://getmyip.pro) IP geolocation API — privacy-first (no logs, no trackers), with ip-api-compatible JSON.
 
+[![Test](https://github.com/soos-labs/getmyip-go/actions/workflows/test.yml/badge.svg)](https://github.com/soos-labs/getmyip-go/actions/workflows/test.yml)
 [![Go Reference](https://pkg.go.dev/badge/github.com/soos-labs/getmyip-go.svg)](https://pkg.go.dev/github.com/soos-labs/getmyip-go)
 [![Go Report Card](https://goreportcard.com/badge/github.com/soos-labs/getmyip-go)](https://goreportcard.com/report/github.com/soos-labs/getmyip-go)
 ![License: MIT](https://img.shields.io/badge/license-MIT-blue)
