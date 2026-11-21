@@ -2,6 +2,8 @@
 
 Tiny, dependency-free Go client **and CLI** for the [getmyip.pro](https://getmyip.pro) IP geolocation API — privacy-first (no logs, no trackers), with ip-api-compatible JSON.
 
+Batch requests require an API key. The key issued in the dashboard accepts up to 1,000 IPs per request. Existing free-tier keys accept up to 100.
+
 > Anonymous lookups: 60 requests/min and 10,000/day, no key. Batch needs a key.
 > Sign in at https://getmyip.pro/login for one key: 600/min, 100,000/day,
 > batch up to 1,000 IPs. Revoke the current key to create another.
@@ -50,6 +52,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"os"
 
 	getmyip "github.com/soos-labs/getmyip-go"
 )
@@ -63,7 +66,8 @@ func main() {
 	r, _ := c.Lookup(context.Background(), "8.8.8.8")
 	fmt.Println(r.Org, r.ASN) // Google LLC 15169
 
-	batch, _ := c.Batch(context.Background(), []string{"8.8.8.8", "1.1.1.1"})
+	keyed := getmyip.New(getmyip.WithAPIKey(os.Getenv("GETMYIP_API_KEY")))
+	batch, _ := keyed.Batch(context.Background(), []string{"8.8.8.8", "1.1.1.1"})
 	fmt.Println(len(batch))
 }
 ```
