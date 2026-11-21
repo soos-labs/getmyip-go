@@ -2,6 +2,12 @@
 
 Tiny, dependency-free Go client **and CLI** for the [getmyip.pro](https://getmyip.pro) IP geolocation API — privacy-first (no logs, no trackers), with ip-api-compatible JSON.
 
+Batch requests require an API key. The key issued in the dashboard accepts up to 1,000 IPs per request. Existing free-tier keys accept up to 100.
+
+> Anonymous lookups: 60 requests/min and 10,000/day, no key. Batch needs a key.
+> Sign in at https://getmyip.pro/login for one key: 600/min, 100,000/day,
+> batch up to 1,000 IPs. Revoke the current key to create another.
+
 [![Test](https://github.com/soos-labs/getmyip-go/actions/workflows/test.yml/badge.svg)](https://github.com/soos-labs/getmyip-go/actions/workflows/test.yml)
 [![Go Reference](https://pkg.go.dev/badge/github.com/soos-labs/getmyip-go.svg)](https://pkg.go.dev/github.com/soos-labs/getmyip-go)
 [![Go Report Card](https://goreportcard.com/badge/github.com/soos-labs/getmyip-go)](https://goreportcard.com/report/github.com/soos-labs/getmyip-go)
@@ -46,6 +52,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"os"
 
 	getmyip "github.com/soos-labs/getmyip-go"
 )
@@ -59,7 +66,7 @@ func main() {
 	r, _ := c.Lookup(context.Background(), "8.8.8.8")
 	fmt.Println(r.Org, r.ASN) // Google LLC 15169
 
-	keyed := getmyip.New(getmyip.WithAPIKey("YOUR_API_KEY")) // batch requires a key
+	keyed := getmyip.New(getmyip.WithAPIKey(os.Getenv("GETMYIP_API_KEY")))
 	batch, _ := keyed.Batch(context.Background(), []string{"8.8.8.8", "1.1.1.1"})
 	fmt.Println(len(batch))
 }
@@ -68,15 +75,6 @@ func main() {
 ## API
 
 Base URL `https://api.getmyip.pro` — see the [API docs](https://docs.getmyip.pro). Endpoints: `GET /v1/json` (your IP), `GET /v1/{ip}`, `POST /v1/batch`. The response is ip-api-compatible JSON, so migrating from `ip-api.com` is usually a one-line change.
-
-## API contract
-
-The client calls `GET /v1/json` for the caller, `GET /v1/{ip}` for an IPv4 or
-IPv6 lookup, and `POST /v1/batch` for a batch. Anonymous requests default to 60
-per minute and 10,000 per day. Batch requests require an API key and allow up to
-100 IPs on the free-key tier or 1,000 on the Pro tier by default. Limits can be
-changed by service configuration. See the [current API documentation](https://docs.getmyip.pro)
-for response fields, errors, and the current limits.
 
 ## License
 
